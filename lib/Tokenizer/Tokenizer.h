@@ -5,7 +5,6 @@
 
 
 using TokenType = int;
-using TextType = std::string;
 
 enum TokenizersTypes {
     DEFAULT, // by symbols
@@ -13,7 +12,7 @@ enum TokenizersTypes {
     /// TODO...
 };
 
-
+template <typename TextType>
 class Tokenizer {
 public:
     explicit Tokenizer() = default;
@@ -21,8 +20,8 @@ public:
     virtual ~Tokenizer() = default;
 };
 
-
-class SplitTokenizer final : public Tokenizer {
+template <typename TextType>
+class SplitTokenizer final : public Tokenizer<TextType> {
 public:
     SplitTokenizer(const TextType& text, TokenType splitter) : _text(text), _splitter(splitter) {}
     std::vector<TokenType> GetTokens() override;
@@ -33,8 +32,8 @@ private:
     TokenType _splitter;
 };
 
-
-class SymbolTokenizer final : public Tokenizer {
+template <typename TextType>
+class SymbolTokenizer final : public Tokenizer<TextType> {
 public:
     explicit SymbolTokenizer(const TextType& text) : _text(text) {}
     std::vector<TokenType> GetTokens() override;
@@ -42,4 +41,5 @@ private:
     const TextType& _text;
 };
 
-std::unique_ptr<Tokenizer> GetTokenizer(TokenizersTypes type, const TextType& text);
+template <typename TextType>
+std::unique_ptr<Tokenizer<TextType>> GetTokenizer(TokenizersTypes type, const TextType& text);

@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 
-using TextType = std::string;
+//using TextType = std::string;
 using type = unsigned long long; // for UTF-8 we need 4 bytes
                                  // so this will handle all cases
                                  // even negative.
-
+template <typename TextType>
 class IterableObject{
 public:
     IterableObject(const TextType& object,
@@ -19,7 +19,8 @@ public:
     bool operator ==(const IterableObject& other) const;
 };
 
+template <typename TextType>
 struct IterableObjectHasher {
-    std::size_t operator()(const IterableObject& k) const;
+    std::size_t operator()(const IterableObject<TextType>& k) const;
 };
 

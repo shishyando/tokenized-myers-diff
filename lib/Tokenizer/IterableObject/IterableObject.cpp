@@ -1,6 +1,7 @@
 #include "IterableObject.h"
 
-std::size_t IterableObjectHasher::operator()(const IterableObject &k) const {
+template <typename TextType>
+std::size_t IterableObjectHasher<TextType>::operator()(const IterableObject<TextType> &k) const {
     size_t hash = 0;
     for (size_t i = k.start; i < k.end; ++i) {
         type num = static_cast<type>(static_cast<unsigned char>(k.object[i]));
@@ -10,7 +11,8 @@ std::size_t IterableObjectHasher::operator()(const IterableObject &k) const {
     return hash;
 }
 
-bool IterableObject::operator ==(const IterableObject& other) const {
+template <typename TextType>
+bool IterableObject<TextType>::operator ==(const IterableObject<TextType>& other) const {
     if (end - start != other.end - other.start) {
         return false;
     }
