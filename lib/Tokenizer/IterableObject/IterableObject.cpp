@@ -1,7 +1,7 @@
 #include "IterableObject.h"
 
 template <typename TextType>
-std::size_t IterableObjectHasher<TextType>::operator()(const IterableObject<TextType> &k) const {
+size_t IterableObjectHasher<TextType>::operator()(const IterableObject<TextType> &k) const {
     size_t hash = 0;
     for (size_t i = k.start; i < k.end; ++i) {
         type num = static_cast<type>(static_cast<unsigned char>(k.object[i]));

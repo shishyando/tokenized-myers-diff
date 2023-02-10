@@ -26,7 +26,7 @@ public:
     SplitTokenizer(const TextType& text, TokenType splitter) : _text(text), _splitter(splitter) {}
     std::vector<TokenType> GetTokens() override;
 private:
-    std::size_t GetNextTokenPos(size_t cur_pos = -1);
+    size_t GetNextTokenPos(size_t cur_pos = -1);
     bool IsSameType(TokenType a, TokenType b);
     const TextType& _text;
     TokenType _splitter;

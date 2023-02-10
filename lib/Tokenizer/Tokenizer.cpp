@@ -1,5 +1,6 @@
-#include "Tokenizer.h"
 #include <unordered_map>
+#include <stdexcept>
+#include "Tokenizer.h"
 #include "IterableObject/IterableObject.h"
 
 template <typename TextType>
@@ -23,7 +24,7 @@ std::vector<TokenType> SplitTokenizer<TextType>::GetTokens() {
 }
 
 template <typename TextType>
-std::size_t SplitTokenizer<TextType>::GetNextTokenPos(size_t pos) {
+size_t SplitTokenizer<TextType>::GetNextTokenPos(size_t pos) {
     if (pos == _text.size()) {
         return pos;
     }

@@ -15,12 +15,12 @@ public:
             start(start),
             end(end) {}
     const TextType& object;
-    std::size_t start, end;
+    size_t start, end;
     bool operator ==(const IterableObject& other) const;
 };
 
 template <typename TextType>
 struct IterableObjectHasher {
-    std::size_t operator()(const IterableObject<TextType>& k) const;
+    size_t operator()(const IterableObject<TextType>& k) const;
 };
 
