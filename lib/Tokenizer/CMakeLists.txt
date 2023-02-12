@@ -4,5 +4,4 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(tests)
 
-add_library(TokenizerLib STATIC Templates_impl.cpp)
-
+add_library(TokenizerLib STATIC Tokenizer.cpp)
