@@ -1,17 +1,18 @@
 #include "Tokenizer.h"
 
 #include <stdexcept>
+#include <cctype>
 
-bool Tokenizer::_GetNextSymbol(TokenType& c) {
-    c.clear();
-    int byte = _stream.get();
-    if (byte == -1) {
-        return false;
+std::optional<TokenType> Tokenizer::GetSymbol(std::istream& input) {
+    int byte = input.get();
+    if (byte == std::char_traits<char>::eof()) {
+        return std::nullopt;
     }
-    c += std::string(1, static_cast<char>(byte));
-    if (!_is_utf_8 || !(byte >> 7)) {
-        return true;
+    if (parser_ == ParserMode::BYTES || !(byte >> 7)) {
+        return TokenType{static_cast<char>(byte)};
     }
+    TokenType symbol;
+    symbol.push_back(byte);
     char octets = 2;
     while (!((byte << octets) >> 7)) {
         ++octets;
@@ -20,69 +21,67 @@ bool Tokenizer::_GetNextSymbol(TokenType& c) {
         }
     }
     while (--octets) {
-        byte = _stream.get();
-        if (byte == -1 || (byte & ((1 << 7) | (1 << 6))) != (1 << 7)) {
+        byte = input.get();
+        if (byte == std::char_traits<char>::eof() || (byte & (0b11 << 6)) != (1 << 7)) {
             throw std::invalid_argument("not a utf-8 file");
         }
-        c += std::string(1, static_cast<char>(byte));
+        symbol.push_back(byte);
     }
-    return true;
+    return symbol;
 }
 
-std::vector<CodeType> MapUsingTokenizers::GetTokensCodes() {
+std::vector<CodeType> MapUsingTokenizers::GetTokenCodes(std::istream& input) {
     std::vector<CodeType> tokenized;
-    std::unordered_map<TokenType, CodeType> map;
-    TokenType token;
-    while (_GetNextToken(token)) {
-        if (map.count(token) == 0) {
-            CodeType code = static_cast<CodeType>(map.size());
-            map[token] = code;
-            _code_to_token[code] = token;
+    while (std::optional<TokenType> token = GetToken(input)) {
+        if (code_by_token_.contains(token.value())) {
+            CodeType code = code_by_token_.size();
+            code_by_token_[token.value()] = code;
+            token_by_code_[code] = token.value();
         }
-        tokenized.push_back(map[token]);
+        tokenized.push_back(code_by_token_[token.value()]);
     }
     return tokenized;
 }
 
 TokenType MapUsingTokenizers::Decode(CodeType code) {
-    return _code_to_token[code];
+    return token_by_code_[code];
 }
 
-bool SplitTokenizer::_GetNextToken(TokenType& token) {
-    static bool read_unhandled_splitter = false;
-    token.clear();
-    if (read_unhandled_splitter) {
-        read_unhandled_splitter = false;
-        token += _splitter;
-        return true;
-    }
-    TokenType c;
-    while (_GetNextSymbol(c)) {
-        if (c == _splitter) {
-            if (token.size() == 0) {
-                token += c;
-            } else {
-                read_unhandled_splitter = true;
-            }
-            return true;
+std::optional<TokenType> SymbolTokenizer::GetToken(std::istream& input) {
+    return GetSymbol(input);
+}
+
+std::optional<TokenType> WordTokenizer::GetToken(std::istream& input) {
+    TokenType token;
+    while (std::optional<TokenType> symbol = GetSymbol(input)) {
+        token += symbol.value();
+        if (symbol.value().size() == 1 && std::isspace(symbol.value()[0])) {
+            break;
         }
-        token += c;
     }
-    return token.size() != 0;
+    return token;
 }
 
-bool SymbolTokenizer::_GetNextToken(TokenType& token) {
-    return _GetNextSymbol(token);
+std::optional<TokenType> LineTokenizer::GetToken(std::istream& input) {
+    TokenType token;
+    while (std::optional<TokenType> symbol = GetSymbol(input)) {
+        token += symbol.value();
+        if (symbol.value() != "\n") {
+            break;
+        }
+    }
+    return token;
 }
 
-std::unique_ptr<Tokenizer> GetTokenizer(TokenizersType tokenizer,
-                                        ParserType parser,
-                                        std::istream& stream) {
-    if (tokenizer == TokenizersType::DEFAULT) {
-        return std::make_unique<SymbolTokenizer>(stream, parser);
-    } else if (tokenizer == TokenizersType::SPACE_SPLIT) {
-        return std::make_unique<SplitTokenizer>(" ", stream, parser);
+std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser) {
+    if (tokenizer == TokenizerMode::SYMBOL) {
+        return std::make_unique<SymbolTokenizer>(parser);
+    } else if (tokenizer == TokenizerMode::WORD) {
+        return std::make_unique<WordTokenizer>(parser);
+    } else if (tokenizer == TokenizerMode::LINE) {
+        return std::make_unique<LineTokenizer>(parser);
     } else {
         throw std::invalid_argument("not such tokenizer type");
     }
 }
+

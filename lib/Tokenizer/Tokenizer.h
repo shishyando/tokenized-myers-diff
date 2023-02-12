@@ -1,67 +1,79 @@
 #pragma once
+
 #include <istream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 using CodeType = size_t;
 using TokenType = std::string;
 
-enum ParserType { BY_CHARS = 0, BY_UTF_8 };
+enum class ParserMode { BYTES, UTF_8 };
 
-enum TokenizersType {
-    DEFAULT,      // by symbols
-    SPACE_SPLIT,  // splits by spaces
-    /// TODO...
+enum class TokenizerMode {
+    SYMBOL,
+    WORD,
+    LINE
 };
 
 class Tokenizer {
-   public:
-    explicit Tokenizer(std::istream& stream, bool is_utf_8 = false)
-        : _stream(stream), _is_utf_8(is_utf_8) {}
-    virtual std::vector<CodeType> GetTokensCodes() = 0;
+public:
+    explicit Tokenizer(ParserMode parser) : parser_(parser) {
+    }
+
+    virtual std::vector<CodeType> GetTokenCodes(std::istream& in) = 0;
     virtual TokenType Decode(CodeType code) = 0;
     virtual ~Tokenizer() = default;
 
-   protected:
-    bool _GetNextSymbol(TokenType& c);
+protected:
+    virtual std::optional<TokenType> GetToken(std::istream& input) = 0;
+    virtual std::optional<TokenType> GetSymbol(std::istream& input);
 
-   private:
-    std::istream& _stream;
-    bool _is_utf_8;
+private:
+    ParserMode parser_;
 };
 
 class MapUsingTokenizers : public Tokenizer {
-   public:
-    MapUsingTokenizers(std::istream& stream, bool is_utf_8 = false)
-        : Tokenizer(stream, is_utf_8) {}
-    std::vector<CodeType> GetTokensCodes() override;
+public:
+    MapUsingTokenizers(ParserMode parser) : Tokenizer(parser) {
+    }
+
+    std::vector<CodeType> GetTokenCodes(std::istream& in) override;
     TokenType Decode(CodeType code) override;
 
-   protected:
-    std::unordered_map<CodeType, TokenType> _code_to_token;
-    virtual bool _GetNextToken(TokenType& token) = 0;
+protected:
+    std::unordered_map<CodeType, TokenType> token_by_code_;
+    std::unordered_map<TokenType, CodeType> code_by_token_;
 };
 
-class SplitTokenizer final : public MapUsingTokenizers {
-   public:
-    SplitTokenizer(TokenType splitter, std::istream& stream,
-                   bool is_utf_8 = false)
-        : MapUsingTokenizers(stream, is_utf_8), _splitter(splitter) {}
+class SymbolTokenizer : public MapUsingTokenizers {
+public:
+    SymbolTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
+    }
 
-   private:
-    bool _GetNextToken(TokenType& token) override;
-    TokenType _splitter;
+protected:
+    std::optional<TokenType> GetToken(std::istream& input) override;
 };
 
-class SymbolTokenizer final : public MapUsingTokenizers {
-   public:
-    explicit SymbolTokenizer(std::istream& stream, bool is_utf_8 = false)
-        : MapUsingTokenizers(stream, is_utf_8) {}
-    bool _GetNextToken(TokenType& token) override;
+class WordTokenizer : public MapUsingTokenizers {
+public:
+    WordTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
+    }
+
+protected:
+    std::optional<TokenType> GetToken(std::istream& input) override;
 };
 
-std::unique_ptr<Tokenizer> GetTokenizer(TokenizersType tokenizer,
-                                        ParserType parser,
-                                        std::istream& stream);
+class LineTokenizer : public MapUsingTokenizers {
+public:
+    LineTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
+    }
+
+protected:
+    std::optional<TokenType> GetToken(std::istream& input) override;
+};
+
+std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser);
+
