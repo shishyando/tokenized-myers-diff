@@ -1,4 +1,4 @@
-#include "lib/ArgParser.h"
+#include "lib/ArgParser/ArgParser.h"
 #include "tests/TestGenerator.h"
 
 class DigitGen final : public TestGenerator {

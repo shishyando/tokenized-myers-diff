@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <lib/ArgParser.h>
+#include "lib/ArgParser/ArgParser.h"
 
 int main(int argc, char *argv[]) {
     ArgParser argParser(argc, argv);
