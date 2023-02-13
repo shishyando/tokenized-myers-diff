@@ -1,5 +1,4 @@
 #include "Tokenizer.h"
-
 #include <stdexcept>
 #include <cctype>
 
@@ -51,43 +50,52 @@ std::optional<TokenType> SymbolTokenizer::GetToken(std::istream& input) {
     return GetSymbol(input);
 }
 
-std::optional<TokenType> WordTokenizer::GetToken(std::istream& input) {
+template<typename IsSplitter>
+std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::istream& input) {
     TokenType token;
+    if (!last_read_splitter_.empty()) {
+        token = last_read_splitter_;
+        last_read_splitter_ = "";
+        return token;
+    }
     while (std::optional<TokenType> symbol = GetSymbol(input)) {
-        token += symbol.value();
-        if (symbol.value().size() == 1 && std::isspace(symbol.value()[0])) {
+        if (IsSplitter{}(symbol.value())) {
+            last_read_splitter_ = symbol.value();
             break;
         }
+        token += symbol.value();
     }
     if (token.empty()) {
-        return std::nullopt;
+        if (last_read_splitter_.empty()) {
+            return std::nullopt;
+        } else {
+            token += last_read_splitter_;
+        }
     }
     return token;
 }
 
-std::optional<TokenType> LineTokenizer::GetToken(std::istream& input) {
-    TokenType token;
-    while (std::optional<TokenType> symbol = GetSymbol(input)) {
-        token += symbol.value();
-        if (symbol.value() == "\n") {
-            break;
-        }
-    }
-    if (token.empty()) {
-        return std::nullopt;
-    }
-    return token;
-}
+
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser) {
+    struct IsWordSplitter {
+        bool operator() (TokenType& token) {
+            return token.size() == 1 && isspace(token[0]);
+        }
+    };
+    struct IsLineSplitter {
+        bool operator() (TokenType& token) {
+            return token.size() == 1 && token == "\n";
+        }
+    };
+
     if (tokenizer == TokenizerMode::SYMBOL) {
         return std::make_unique<SymbolTokenizer>(parser);
     } else if (tokenizer == TokenizerMode::WORD) {
-        return std::make_unique<WordTokenizer>(parser);
+        return std::make_unique<SymbolSplitTokenizer<IsWordSplitter>>(parser);
     } else if (tokenizer == TokenizerMode::LINE) {
-        return std::make_unique<LineTokenizer>(parser);
+        return std::make_unique<SymbolSplitTokenizer<IsLineSplitter>>(parser);
     } else {
         throw std::invalid_argument("not such tokenizer type");
     }
 }
-

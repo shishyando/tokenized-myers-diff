@@ -57,23 +57,17 @@ protected:
     std::optional<TokenType> GetToken(std::istream& input) override;
 };
 
-class WordTokenizer : public MapUsingTokenizers {
+template<typename IsSplitter>
+class SymbolSplitTokenizer : public MapUsingTokenizers {
 public:
-    WordTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
+    SymbolSplitTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
     }
 
 protected:
     std::optional<TokenType> GetToken(std::istream& input) override;
-};
 
-class LineTokenizer : public MapUsingTokenizers {
-public:
-    LineTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {
-    }
-
-protected:
-    std::optional<TokenType> GetToken(std::istream& input) override;
+private:
+    TokenType last_read_splitter_;
 };
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser);
-
