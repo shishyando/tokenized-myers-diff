@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdexcept>
 #include <vector>
 #include <utility>
+#include <stdexcept>
 
 namespace Myers {
 
@@ -15,21 +15,11 @@ using Script = std::vector<Replacement>;
 
 class Snake {
 public:
-    Snake(size_t begin_x, size_t begin_y, size_t width)
-        : begin_x_(begin_x), begin_y_(begin_y), width_(width) {
-    }
+    Snake(size_t begin_x, size_t begin_y, size_t width);
 
-    std::pair<size_t, size_t> Begin() {
-        return {begin_x_, begin_y_};
-    }
-
-    size_t Width() {
-        return width_;
-    }
-
-    std::pair<size_t, size_t> End() {
-        return {begin_x_ + width_, begin_y_ + width_};
-    }
+    std::pair<size_t, size_t> Begin();
+    size_t Width();
+    std::pair<size_t, size_t> End();
 
 private:
     size_t begin_x_;
@@ -45,12 +35,12 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
     size_t to_size = to_right - to_left;
 
     size_t total_size = from_size + to_size;
-    int64_t delta = from_size - to_size;
+    long long delta = from_size - to_size;
     size_t offset = total_size + 1 + abs(delta);
     bool is_odd = total_size & 1;
 
     std::vector<size_t> max_direct_path(offset * 2);
-    std::vector<size_t> max_reversed_path(offset * 2, from_size + 1);
+    std::vector<long long> max_reversed_path(offset * 2, from_size + 1);
 
     for (size_t script_size = 0; script_size <= (total_size + 1) / 2; ++script_size) {
         size_t lowest_diag = offset - script_size;
@@ -86,7 +76,7 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
         lowest_diag += delta;
         highest_diag += delta;
         for (size_t diagonal = lowest_diag; diagonal <= highest_diag; diagonal += 2) {
-            size_t from_id;
+            long long from_id;
             if (diagonal == lowest_diag ||
                 (diagonal != highest_diag &&
                  max_reversed_path[diagonal + 1] <= max_reversed_path[diagonal - 1])) {
@@ -95,10 +85,11 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
                 from_id = max_reversed_path[diagonal - 1];
             }
 
-            size_t to_id = from_id + offset - diagonal + to_left;
+            long long to_id = from_id + offset - diagonal + to_left;
             from_id += from_left;
             size_t snake_length = 0;
-            while (from_id > from_left && to_id > to_left && from[from_id - 1] == to[to_id - 1]) {
+            while (from_id > static_cast<long long>(from_left) &&
+                   to_id > static_cast<long long>(to_left) && from[from_id - 1] == to[to_id - 1]) {
                 --from_id;
                 --to_id;
                 ++snake_length;
@@ -118,8 +109,8 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
 template <typename T>
 static void GetSnakeDecomposition(const std::vector<T>& from, const std::vector<T>& to,
                                   size_t from_left, size_t from_right, size_t to_left,
-                                  size_t to_right, std::vector<int64_t>& from_snake,
-                                  std::vector<int64_t>& to_snake, int64_t& current_snake) {
+                                  size_t to_right, std::vector<ssize_t>& from_snake,
+                                  std::vector<ssize_t>& to_snake, size_t& current_snake) {
     auto [ses_size, snake] = GetMiddleSnake(from, to, from_left, from_right, to_left, to_right);
     if (ses_size > 1) {
         auto [from_begin, to_begin] = snake.Begin();
@@ -168,9 +159,9 @@ std::vector<T> LargestCommonSubsequence(const std::vector<T>& from, const std::v
     if (from.empty() || to.empty()) {
         return {};
     }
-    std::vector<int64_t> from_snake(from.size(), -1);
-    std::vector<int64_t> to_snake(to.size(), -1);
-    int64_t current_snake = 0;
+    std::vector<ssize_t> from_snake(from.size(), -1);
+    std::vector<ssize_t> to_snake(to.size(), -1);
+    size_t current_snake = 0;
     GetSnakeDecomposition(from, to, 0, from.size(), 0, to.size(), from_snake, to_snake,
                           current_snake);
     std::vector<T> lcs;
@@ -193,9 +184,9 @@ Script ShortestEditScript(const std::vector<T>& from, const std::vector<T>& to) 
     if (to.empty()) {
         return {Replacement{0, from.size(), 0, 0}};
     }
-    std::vector<int64_t> from_snake(from.size(), -1);
-    std::vector<int64_t> to_snake(to.size(), -1);
-    int64_t current_snake = 0;
+    std::vector<ssize_t> from_snake(from.size(), -1);
+    std::vector<ssize_t> to_snake(to.size(), -1);
+    size_t current_snake = 0;
     GetSnakeDecomposition(from, to, 0, from.size(), 0, to.size(), from_snake, to_snake,
                           current_snake);
     Script script;
