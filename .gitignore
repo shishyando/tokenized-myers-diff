@@ -33,3 +33,7 @@
 
 # Idea files
 .idea
+
+# VS folders
+**/.vs
+**/out

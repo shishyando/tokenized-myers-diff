@@ -1,7 +1,8 @@
+#include <stdexcept>
 #include <vector>
 #include <utility>
 
-namespace myers {
+namespace Myers {
 
 struct Replacement {
     size_t from_left, from_right;
@@ -221,4 +222,4 @@ Script ShortestEditScript(const std::vector<T>& from, const std::vector<T>& to) 
     return script;
 }
 
-}  // namespace myers
+}  // namespace Myers

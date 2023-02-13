@@ -1,0 +1,6 @@
+*.h eol=lf
+*.cpp eol=lf
+*.txt eol=lf
+*.md eol=lf
+.gitignore eol=lf
+.gitattributes eol=lf

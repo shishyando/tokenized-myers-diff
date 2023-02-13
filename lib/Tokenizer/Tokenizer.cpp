@@ -33,7 +33,7 @@ std::optional<TokenType> Tokenizer::GetSymbol(std::istream& input) {
 std::vector<CodeType> MapUsingTokenizers::GetTokenCodes(std::istream& input) {
     std::vector<CodeType> tokenized;
     while (std::optional<TokenType> token = GetToken(input)) {
-        if (code_by_token_.contains(token.value())) {
+        if (!code_by_token_.contains(token.value())) {
             CodeType code = code_by_token_.size();
             code_by_token_[token.value()] = code;
             token_by_code_[code] = token.value();
@@ -59,6 +59,9 @@ std::optional<TokenType> WordTokenizer::GetToken(std::istream& input) {
             break;
         }
     }
+    if (token.empty()) {
+        return std::nullopt;
+    }
     return token;
 }
 
@@ -66,9 +69,12 @@ std::optional<TokenType> LineTokenizer::GetToken(std::istream& input) {
     TokenType token;
     while (std::optional<TokenType> symbol = GetSymbol(input)) {
         token += symbol.value();
-        if (symbol.value() != "\n") {
+        if (symbol.value() == "\n") {
             break;
         }
+    }
+    if (token.empty()) {
+        return std::nullopt;
     }
     return token;
 }
