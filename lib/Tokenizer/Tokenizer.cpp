@@ -55,7 +55,7 @@ std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::istream
     TokenType token;
     if (!last_read_splitter_.empty()) {
         token = last_read_splitter_;
-        last_read_splitter_ = "";
+        last_read_splitter_.clear();
         return token;
     }
     while (std::optional<TokenType> symbol = GetSymbol(input)) {
@@ -68,14 +68,12 @@ std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::istream
     if (token.empty()) {
         if (last_read_splitter_.empty()) {
             return std::nullopt;
-        } else {
-            token += last_read_splitter_;
         }
+        token = last_read_splitter_;
+        last_read_splitter_.clear();
     }
     return token;
 }
-
-
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser) {
     struct IsWordSplitter {
@@ -85,7 +83,7 @@ std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode pars
     };
     struct IsLineSplitter {
         bool operator() (TokenType& token) {
-            return token.size() == 1 && token == "\n";
+            return token == "\n";
         }
     };
 

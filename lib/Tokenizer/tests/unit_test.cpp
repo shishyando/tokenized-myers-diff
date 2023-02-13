@@ -20,7 +20,7 @@ void Test(const T& text, TokenizerMode tokenizer, ParserMode parser) {
 }
 
 int main() {
-    const std::string test = "Эх Паша, Паша, Паша.";
+    const std::string test = "Эх Паша, Паша,   Паша.   ";
     const std::string test1 =
         "Never gonna give you up\n"
         "Never gonna let you down\n"
@@ -30,7 +30,7 @@ int main() {
         "Never gonna say goodbye\n"
         "Never gonna give you up\n"
         "Never gonna tell a lie and hurt you";
-    const std::string test2 = "aba шшш";
+    const std::string test2 = "aba   шшш";
 
     Test(test, TokenizerMode::WORD, ParserMode::UTF_8);
     Test(test1, TokenizerMode::LINE, ParserMode::BYTES);
