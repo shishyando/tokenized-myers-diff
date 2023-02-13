@@ -15,17 +15,17 @@ void ArgParser::Build() {
         std::string s = std::string(_argv[i]);
         if (s.find("=") != std::string::npos) {
             auto pos = s.find("=");
-            _values[_aliases[s.substr(0, pos)]] = std::stoi(s.substr(pos + 1));
+            _values[_aliases[s.substr(0, pos)]] = s.substr(pos + 1);
         } else {
             _values[_aliases[s]] = 1;
         }
     }
 }
 
-int ArgParser::Get(std::string name) const {
+std::optional<std::string> ArgParser::Get(std::string name) const {
     try {
        return _values.at(name);
     } catch (...) {
-        return 0;
+        return std::nullopt;
     }
 }

@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
     args.Add("d", "spaces");
     args.Build();
     DigitGen gen;
-    gen.Seed(args.Get("seed"));
-    gen.GenTest(args.Get("lines"),
-                args.Get("length"),
-                args.Get("spaces"));
+    gen.Seed(stoi(args.Get("seed").value()));
+    gen.GenTest(stoi(args.Get("lines").value()),
+                stoi(args.Get("length").value()),
+                stoi(args.Get("spaces").value()));
     return 0;
 }
