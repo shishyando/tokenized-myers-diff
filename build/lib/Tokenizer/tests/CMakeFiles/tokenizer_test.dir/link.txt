@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/tokenizer_test.dir/unit_test.cpp.o -o tokenizer_test  ../libTokenizerLib.a 
