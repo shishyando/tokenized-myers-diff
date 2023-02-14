@@ -8,40 +8,51 @@
 #include "lib/MyersDiff/MyersDiff.h"
 #include "lib/Tokenizer/Tokenizer.h"
 
-const std::string ARGS_FORMAT = "Please use: diff old=<path_to_file1> new=<path_to_file2> [token=<tokenizer_mode>] [parser=<parser_mode>]";
+const std::string ARGS_FORMAT = "Usage: diff old new [tokenizer parser]\n"
+                                "   old=<path_to_file1>\n"
+                                "   new=<path_to_file2>\n"
+                                "   tokenizer=<tokenizer_mode>   possible modes: symbol, word, line   default: word\n"
+                                "   parser=<parser_mode>         possible modes: bytes, utf-8         default: utf-8\n";
 
 int main(int argc, char *argv[]) {
     ArgParser argParser(argc, argv);
     argParser.Add("old", "old_file");
     argParser.Add("new", "new_file");
-    argParser.Add("token", "token_mode");
+    argParser.Add("tokenizer", "tokenizer");
     argParser.Add("parser", "parser_mode");
     try {
         argParser.Build();
+        if (!argParser.Get("old_file").has_value() || !argParser.Get("new_file").has_value()) {
+            throw std::invalid_argument("no input files given");
+        }
     } catch (...) {
         std::cout << ARGS_FORMAT << std::endl;
         return 0;
     }
-    std::string old_file_path = (argParser.Get("old_file").has_value() ? argParser.Get("old_file").value() : "");
-    std::string new_file_path = (argParser.Get("new_file").has_value() ? argParser.Get("new_file").value() : "");
-    std::string token_str = (argParser.Get("token_mode").has_value() ? argParser.Get("token_mode").value() : "word");
-    std::string parser_str = (argParser.Get("parser_mode").has_value() ? argParser.Get("parser_mode").value() : "utf-8");
+    std::string old_file_path = argParser.Get("old_file").value();
+    std::string new_file_path = argParser.Get("new_file").value();
+    std::string tokeninzer_arg = (argParser.Get("tokenizer").has_value() ? argParser.Get("tokenizer").value() : "word");
+    std::string parser_arg = (argParser.Get("parser_mode").has_value() ? argParser.Get("parser_mode").value() : "utf-8");
 
-    TokenizerMode token_mode;
-    if (token_str == "symbol") {
-        token_mode = TokenizerMode::SYMBOL;
-    } else if (token_str == "word") {
-        token_mode = TokenizerMode::WORD;
-    } else if (token_str == "line") {
-        token_mode = TokenizerMode::LINE;
+    std::cerr << "old file path: " << old_file_path << '\n';
+    std::cerr << "new file path: " << new_file_path << '\n';
+    std::cerr << "old file path: " << tokeninzer_arg << '\n';
+    std::cerr << "old file path: " << parser_arg << '\n';
+    TokenizerMode tokenizer_mode;
+    if (tokeninzer_arg == "symbol") {
+        tokenizer_mode = TokenizerMode::SYMBOL;
+    } else if (tokeninzer_arg == "word") {
+        tokenizer_mode = TokenizerMode::WORD;
+    } else if (tokeninzer_arg == "line") {
+        tokenizer_mode = TokenizerMode::LINE;
     } else {
-        std::cout << ARGS_FORMAT << std::endl;
+        std::cerr << ARGS_FORMAT << std::endl;
         return 0;
     }
     ParserMode parser_mode;
-    if (parser_str == "bytes") {
+    if (parser_arg == "bytes") {
         parser_mode = ParserMode::BYTES;
-    } else if (parser_str == "utf-8") {
+    } else if (parser_arg == "utf-8") {
         parser_mode = ParserMode::UTF_8;
     } else {
         std::cout << ARGS_FORMAT << std::endl;
@@ -59,26 +70,26 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<Tokenizer> tokenizer;
     std::vector<CodeType> old_code, new_code;
     try {
-        tokenizer = GetTokenizer(token_mode, parser_mode);
+        tokenizer = GetTokenizer(tokenizer_mode, parser_mode);
         old_code = tokenizer->GetTokenCodes(old_file);
         new_code = tokenizer->GetTokenCodes(new_file);
-    } catch (...) {
-        std::cout << "Tokenizer Error" << std::endl;
+    } catch (const std::exception & ex) {
+        std::cerr << "Tokenizer Error: " << ex.what() << std::endl;
         return 1;
     }
 
     Myers::Script script;
     try {
         script = Myers::ShortestEditScript<CodeType>(old_code, new_code);
-    } catch (...) {
-        std::cout << "Myers Algorithm Error" << std::endl;
+    } catch (const std::exception & ex) {
+        std::cerr << "Myers Algorithm Error: " << ex.what() << std::endl;
         return 2;
     }
 
     try {
         DiffPrint::Print(std::cout, script, tokenizer, old_code, new_code);
-    } catch (...) {
-        std::cout << "Print Diff Error" << std::endl;
+    } catch (const std::exception & ex) {
+        std::cerr << "Print Diff Error: " << ex.what() << std::endl;
         return 3;
     }
 

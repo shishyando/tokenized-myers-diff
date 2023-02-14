@@ -96,6 +96,6 @@ std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode pars
     } else if (tokenizer == TokenizerMode::LINE) {
         return std::make_unique<SymbolSplitTokenizer<IsLineSplitter>>(parser);
     } else {
-        throw std::invalid_argument("not such tokenizer type");
+        throw std::invalid_argument("no such tokenizer type");
     }
 }
