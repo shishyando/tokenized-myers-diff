@@ -12,11 +12,7 @@ using TokenType = std::string;
 
 enum class ParserMode { BYTES, UTF_8 };
 
-enum class TokenizerMode {
-    SYMBOL,
-    WORD,
-    LINE
-};
+enum class TokenizerMode { SYMBOL, WORD, LINE };
 
 class Tokenizer {
 public:
@@ -57,7 +53,7 @@ protected:
     std::optional<TokenType> GetToken(std::istream& input) override;
 };
 
-template<typename IsSplitter>
+template <typename IsSplitter>
 class SymbolSplitTokenizer : public MapUsingTokenizers {
 public:
     SymbolSplitTokenizer(ParserMode parser) : MapUsingTokenizers(parser) {

@@ -13,8 +13,10 @@ std::optional<TokenType> Tokenizer::GetSymbol(std::istream& input) {
     TokenType symbol;
     symbol.push_back(byte);
     char octets = 2;
-    while (!((byte << octets) >> 7)) {
+    char mask = 1 << 5; 
+    while (byte & mask) {
         ++octets;
+        mask >>= 1;
         if (octets > 4) {
             throw std::invalid_argument("not a utf-8 file");
         }
