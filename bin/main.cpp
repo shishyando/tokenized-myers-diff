@@ -34,10 +34,6 @@ int main(int argc, char *argv[]) {
     std::string tokeninzer_arg = (argParser.Get("tokenizer").has_value() ? argParser.Get("tokenizer").value() : "word");
     std::string parser_arg = (argParser.Get("parser_mode").has_value() ? argParser.Get("parser_mode").value() : "utf-8");
 
-    std::cerr << "old file path:  " << old_file_path << '\n';
-    std::cerr << "new file path:  " << new_file_path << '\n';
-    std::cerr << "tokenizer mode: " << tokeninzer_arg << '\n';
-    std::cerr << "parser mode:    " << parser_arg << '\n';
     TokenizerMode tokenizer_mode;
     if (tokeninzer_arg == "symbol") {
         tokenizer_mode = TokenizerMode::SYMBOL;
