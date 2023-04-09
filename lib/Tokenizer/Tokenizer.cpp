@@ -2,8 +2,11 @@
 #include <stdexcept>
 #include <cctype>
 
-std::optional<TokenType> Tokenizer::GetSymbol(std::istream& input) {
-    int byte = input.get();
+std::optional<TokenType> Tokenizer::GetSymbol(std::string_view& input, size_t pos) {
+    if (pos >= input.size()) {
+        return std::nullopt;
+    }
+    int byte = input[pos];
     if (byte == std::char_traits<char>::eof()) {
         return std::nullopt;
     }
@@ -18,28 +21,36 @@ std::optional<TokenType> Tokenizer::GetSymbol(std::istream& input) {
         ++octets;
         mask >>= 1;
         if (octets > 4) {
-            throw std::invalid_argument("not a utf-8 file");
+            throw std::invalid_argument("not a utf-8 file: invalid byte sequence");
         }
     }
     while (--octets) {
-        byte = input.get();
-        if (byte == std::char_traits<char>::eof() || (byte & (0b11 << 6)) != (1 << 7)) {
-            throw std::invalid_argument("not a utf-8 file");
+        if (++pos >= input.size()) {
+            throw std::invalid_argument("not a utf-8 file: unexpected EOF");
+        }
+        byte = input[pos];
+        if (byte == std::char_traits<char>::eof()) {
+            throw std::invalid_argument("not a utf-8 file: unexpected EOF");
+        }
+        if ((byte & (0b11 << 6)) != (1 << 7)) {
+            throw std::invalid_argument("not a utf-8 file: invalid byte sequence");
         }
         symbol.push_back(byte);
     }
     return symbol;
 }
 
-std::vector<CodeType> MapUsingTokenizers::GetTokenCodes(std::istream& input) {
+std::vector<CodeType> MapUsingTokenizers::GetTokenCodes(std::string_view& input) {
     std::vector<CodeType> tokenized;
-    while (std::optional<TokenType> token = GetToken(input)) {
+    size_t pos = 0;
+    while (std::optional<TokenType> token = GetToken(input, pos)) {
         if (!code_by_token_.contains(token.value())) {
             CodeType code = code_by_token_.size();
             code_by_token_[token.value()] = code;
             token_by_code_[code] = token.value();
         }
         tokenized.push_back(code_by_token_[token.value()]);
+        pos += token.value().size();
     }
     return tokenized;
 }
@@ -48,24 +59,25 @@ TokenType MapUsingTokenizers::Decode(CodeType code) {
     return token_by_code_[code];
 }
 
-std::optional<TokenType> SymbolTokenizer::GetToken(std::istream& input) {
-    return GetSymbol(input);
+std::optional<TokenType> SymbolTokenizer::GetToken(std::string_view& input, size_t pos) {
+    return GetSymbol(input, pos);
 }
 
 template<typename IsSplitter>
-std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::istream& input) {
+std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::string_view& input, size_t pos) {
     TokenType token;
     if (!last_read_splitter_.empty()) {
         token = last_read_splitter_;
         last_read_splitter_.clear();
         return token;
     }
-    while (std::optional<TokenType> symbol = GetSymbol(input)) {
+    while (std::optional<TokenType> symbol = GetSymbol(input, pos)) {
         if (IsSplitter{}(symbol.value())) {
             last_read_splitter_ = symbol.value();
             break;
         }
         token += symbol.value();
+        pos += symbol.value().size();
     }
     if (token.empty()) {
         if (last_read_splitter_.empty()) {

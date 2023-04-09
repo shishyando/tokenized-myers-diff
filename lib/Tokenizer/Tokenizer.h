@@ -19,13 +19,13 @@ public:
     explicit Tokenizer(ParserMode parser) : parser_(parser) {
     }
 
-    virtual std::vector<CodeType> GetTokenCodes(std::istream& in) = 0;
+    virtual std::vector<CodeType> GetTokenCodes(std::string_view& input) = 0;
     virtual TokenType Decode(CodeType code) = 0;
     virtual ~Tokenizer() = default;
 
 protected:
-    virtual std::optional<TokenType> GetToken(std::istream& input) = 0;
-    virtual std::optional<TokenType> GetSymbol(std::istream& input);
+    virtual std::optional<TokenType> GetToken(std::string_view& input, size_t pos) = 0;
+    virtual std::optional<TokenType> GetSymbol(std::string_view& input, size_t pos);
 
 private:
     ParserMode parser_;
@@ -36,7 +36,7 @@ public:
     MapUsingTokenizers(ParserMode parser) : Tokenizer(parser) {
     }
 
-    std::vector<CodeType> GetTokenCodes(std::istream& in) override;
+    std::vector<CodeType> GetTokenCodes(std::string_view& input) override;
     TokenType Decode(CodeType code) override;
 
 protected:
@@ -50,7 +50,7 @@ public:
     }
 
 protected:
-    std::optional<TokenType> GetToken(std::istream& input) override;
+    std::optional<TokenType> GetToken(std::string_view& input, size_t pos) override;
 };
 
 template <typename IsSplitter>
@@ -60,7 +60,7 @@ public:
     }
 
 protected:
-    std::optional<TokenType> GetToken(std::istream& input) override;
+    std::optional<TokenType> GetToken(std::string_view& input, size_t pos) override;
 
 private:
     TokenType last_read_splitter_;

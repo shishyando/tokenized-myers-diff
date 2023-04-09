@@ -2,12 +2,31 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
 
 #include "lib/argparse/argparse.hpp"
 #include "lib/DiffPrint/DiffPrint.h"
 #include "lib/MyersDiff/MyersDiff.h"
 #include "lib/Tokenizer/Tokenizer.h"
 #include "lib/Timer/Timer.h"
+
+char* mmap_file(const char *file_path) {
+    struct stat file_stat;
+    int fd = open(file_path, O_RDONLY);
+    errno = 0;
+    int status = fstat(fd, &file_stat);
+    if (status == -1) {
+        throw std::runtime_error("read_file: " + std::string(strerror(errno)));
+    }
+    errno = 0;
+    void *mem = mmap(0, file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mem == MAP_FAILED) {
+        throw std::runtime_error("mmap: " + std::string(strerror(errno)));
+    }
+    return (char*)mem;
+}
 
 static Timer timer;
 
@@ -67,14 +86,20 @@ int main(int argc, char *argv[]) {
 
     if (benchmark) timer.Start();
 
-    std::ifstream old_file, new_file;
+    char *old_file_mem;
+    char *new_file_mem;
     try {
-        old_file.open(old_file_path);
-        new_file.open(new_file_path);
+        old_file_mem = mmap_file(old_file_path.c_str());
+        new_file_mem = mmap_file(new_file_path.c_str());
     } catch (const std::exception& ex) {
+        std::cerr << ex.what() << std::endl;
         std::cerr << args << std::endl;
         return 1;
     }
+    std::string_view old_file = old_file_mem;
+    std::string_view new_file = new_file_mem;
+
+    if (benchmark) timer.Duration("mmap files");
 
     std::unique_ptr<Tokenizer> tokenizer;
     std::vector<CodeType> old_code, new_code;
