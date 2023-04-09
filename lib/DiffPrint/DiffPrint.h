@@ -43,7 +43,6 @@ void Print(std::ostream& output, const TScript& script, const std::unique_ptr<TT
         }
     }
     output << '\n';
-    std::flush(output);
 }
 
 } // namespace DiffPrint

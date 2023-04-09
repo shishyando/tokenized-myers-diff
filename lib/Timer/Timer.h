@@ -8,7 +8,7 @@ class Timer
 public:
     void Start();
     void End();
-    void Duration(std::string);
+    void Duration(std::string, bool reset = true);
 
 private:
     std::chrono::time_point<std::chrono::steady_clock> _start = std::chrono::high_resolution_clock::now();
