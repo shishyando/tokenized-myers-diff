@@ -7,8 +7,8 @@
 #include <vector>
 #include <optional>
 
-using CodeType = size_t;
-using TokenType = std::string;
+using CodeType = uint32_t;
+using TokenType = std::string_view;
 
 enum class ParserMode { BYTES, UTF_8 };
 
@@ -40,8 +40,9 @@ public:
     TokenType Decode(CodeType code) override;
 
 protected:
-    std::unordered_map<CodeType, TokenType> token_by_code_;
-    std::unordered_map<TokenType, CodeType> code_by_token_;
+    std::unordered_map<size_t, CodeType> hash2id_;
+    std::vector<TokenType> tokens_;
+    CodeType last_code_ = 0;
 };
 
 class SymbolTokenizer : public MapUsingTokenizers {
