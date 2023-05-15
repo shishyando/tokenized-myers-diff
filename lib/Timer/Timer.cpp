@@ -1,23 +1,18 @@
 #include "Timer.h"
 
 void Timer::Start() {
-    _start = std::chrono::high_resolution_clock::now();
-    _end = {};
-}
-
-void Timer::End() {
-    _end = std::chrono::high_resolution_clock::now();
+    start_ = std::chrono::high_resolution_clock::now();
+    end_ = {};
 }
 
 void Timer::Duration(std::string label, bool reset) {
-    if (_end == std::chrono::time_point<std::chrono::steady_clock>{}) {
-        _end = std::chrono::high_resolution_clock::now();
+    if (end_ == std::chrono::time_point<std::chrono::steady_clock>{}) {
+        end_ = std::chrono::high_resolution_clock::now();
     }
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(_end - _start);
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_ - start_);
     std::cerr << label + ": " << duration.count() << "ms\n";
     if (reset) {
-        _start = std::chrono::high_resolution_clock::now();
-        _end = std::chrono::time_point<std::chrono::steady_clock>{};
+        start_ = std::chrono::high_resolution_clock::now();
+        end_ = std::chrono::time_point<std::chrono::steady_clock>{};
     }
 }
-

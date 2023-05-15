@@ -6,10 +6,7 @@ std::optional<TokenType> Tokenizer::GetSymbol(std::string_view& input, size_t po
     if (pos >= input.size()) {
         return std::nullopt;
     }
-    int byte = static_cast<unsigned char>(input[pos]);
-    if (byte == std::char_traits<unsigned char>::eof()) {
-        return std::nullopt;
-    }
+    unsigned char byte = input[pos];
     if (parser_ == ParserMode::BYTES || !(byte >> 7)) {
         return input.substr(pos, 1);
     }
@@ -22,22 +19,17 @@ std::optional<TokenType> Tokenizer::GetSymbol(std::string_view& input, size_t po
             throw std::invalid_argument("not a utf-8 file: invalid byte sequence");
         }
     }
-    size_t len = 1;
     size_t start = pos;
     while (--octets) {
         if (++pos >= input.size()) {
             throw std::invalid_argument("not a utf-8 file: unexpected EOF");
         }
-        byte = static_cast<unsigned char>(input[pos]);
-        if (byte == std::char_traits<unsigned char>::eof()) {
-            throw std::invalid_argument("not a utf-8 file: unexpected EOF");
-        }
+        byte = input[pos];
         if ((byte & (0b11 << 6)) != (1 << 7)) {
             throw std::invalid_argument("not a utf-8 file: invalid byte sequence");
         }
-        ++len;
     }
-    return input.substr(start, len);
+    return input.substr(start, pos - start + 1);
 }
 
 std::vector<CodeType> MapUsingTokenizers::GetTokenCodes(std::string_view& input) {
@@ -66,8 +58,9 @@ std::optional<TokenType> SymbolTokenizer::GetToken(std::string_view& input, size
     return GetSymbol(input, pos);
 }
 
-template<typename IsSplitter>
-std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::string_view& input, size_t pos) {
+template <typename IsSplitter>
+std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::string_view& input,
+                                                                    size_t pos) {
     TokenType token;
     if (!last_read_splitter_.empty()) {
         token = last_read_splitter_;
@@ -96,12 +89,12 @@ std::optional<TokenType> SymbolSplitTokenizer<IsSplitter>::GetToken(std::string_
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser) {
     struct IsWordSplitter {
-        bool operator() (TokenType& token) {
+        bool operator()(TokenType& token) {
             return token.size() == 1 && isspace(token[0]);
         }
     };
     struct IsLineSplitter {
-        bool operator() (TokenType& token) {
+        bool operator()(TokenType& token) {
             return token == "\n";
         }
     };
