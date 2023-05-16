@@ -4,17 +4,15 @@
 #include "../Tokenizer.h"
 
 // TODO....
-template <typename T>
-void Test(const T& text, TokenizerMode tokenizer, ParserMode parser) {
-    std::istringstream stream(text);
-    std::unique_ptr<Tokenizer> a = GetTokenizer(tokenizer, parser);
-    std::vector<CodeType> vec = a->GetTokenCodes(stream);
+void Test(std::string_view text, TokenizerMode tokenizer_mode, ParserMode parser) {
+    std::unique_ptr<Tokenizer> tokenizer = GetTokenizer(tokenizer_mode, parser);
+    std::vector<CodeType> vec = tokenizer->GetTokenCodes(text);
     for (auto i : vec) {
         std::cout << i << ' ';
     }
     std::cout << std::endl;
     for (auto i : vec) {
-        std::cout << a->Decode(i) << "|";
+        std::cout << tokenizer->Decode(i) << "|";
     }
     std::cout << std::endl << "-------------" << std::endl;
 }

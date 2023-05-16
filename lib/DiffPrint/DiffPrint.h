@@ -7,21 +7,19 @@
 
 namespace DiffPrint {
 
-enum Color {
-    DEFAULT = 0,
-    RED = 31,
-    GREEN = 32
-};
+enum Color { DEFAULT = 0, RED = 31, GREEN = 32 };
 
-template<typename TToken>
+template <typename TToken>
 static void PrintColoredToken(std::ostream& output, TToken token, Color color) {
     output << "\033[" + std::to_string(color) + "m";
     output << token;
     output << "\033[0m";
 }
 
-template<typename TScript, typename TTokenizer, typename TCode>
-void Print(std::ostream& output, const TScript& script, const std::unique_ptr<TTokenizer>& tokenizer, const std::vector<TCode>& old_code, const std::vector<TCode>& new_code) {
+template <typename TScript, typename TTokenizer, typename TCode>
+void Print(std::ostream& output, const TScript& script,
+           const std::unique_ptr<TTokenizer>& tokenizer, const std::vector<TCode>& old_code,
+           const std::vector<TCode>& new_code) {
     size_t old_sz = old_code.size();
     size_t old_ind = 0;
     auto repl = script.begin();
@@ -45,4 +43,4 @@ void Print(std::ostream& output, const TScript& script, const std::unique_ptr<TT
     output << '\n';
 }
 
-} // namespace DiffPrint
+}  // namespace DiffPrint

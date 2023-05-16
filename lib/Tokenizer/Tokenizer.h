@@ -7,8 +7,8 @@
 #include <vector>
 #include <optional>
 
-using CodeType = size_t;
-using TokenType = std::string;
+using CodeType = uint32_t;
+using TokenType = std::string_view;
 
 enum class ParserMode { BYTES, UTF_8 };
 
@@ -19,13 +19,13 @@ public:
     explicit Tokenizer(ParserMode parser) : parser_(parser) {
     }
 
-    virtual std::vector<CodeType> GetTokenCodes(std::istream& in) = 0;
+    virtual std::vector<CodeType> GetTokenCodes(std::string_view& input) = 0;
     virtual TokenType Decode(CodeType code) = 0;
     virtual ~Tokenizer() = default;
 
 protected:
-    virtual std::optional<TokenType> GetToken(std::istream& input) = 0;
-    virtual std::optional<TokenType> GetSymbol(std::istream& input);
+    virtual std::optional<TokenType> GetToken(std::string_view& input, size_t pos) = 0;
+    virtual std::optional<TokenType> GetSymbol(std::string_view& input, size_t pos);
 
 private:
     ParserMode parser_;
@@ -36,12 +36,13 @@ public:
     MapUsingTokenizers(ParserMode parser) : Tokenizer(parser) {
     }
 
-    std::vector<CodeType> GetTokenCodes(std::istream& in) override;
+    std::vector<CodeType> GetTokenCodes(std::string_view& input) override;
     TokenType Decode(CodeType code) override;
 
 protected:
-    std::unordered_map<CodeType, TokenType> token_by_code_;
-    std::unordered_map<TokenType, CodeType> code_by_token_;
+    std::unordered_map<size_t, CodeType> hash2id_;
+    std::vector<TokenType> tokens_;
+    CodeType last_code_ = 0;
 };
 
 class SymbolTokenizer : public MapUsingTokenizers {
@@ -50,7 +51,7 @@ public:
     }
 
 protected:
-    std::optional<TokenType> GetToken(std::istream& input) override;
+    std::optional<TokenType> GetToken(std::string_view& input, size_t pos) override;
 };
 
 template <typename IsSplitter>
@@ -60,7 +61,7 @@ public:
     }
 
 protected:
-    std::optional<TokenType> GetToken(std::istream& input) override;
+    std::optional<TokenType> GetToken(std::string_view& input, size_t pos) override;
 
 private:
     TokenType last_read_splitter_;

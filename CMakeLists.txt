@@ -11,6 +11,7 @@ add_library(Timer STATIC lib/Timer/Timer.cpp)
 
 add_subdirectory(tests)
 
+add_compile_options(-O3)
 add_executable(diff bin/main.cpp)
 
 add_subdirectory(lib/Tokenizer)

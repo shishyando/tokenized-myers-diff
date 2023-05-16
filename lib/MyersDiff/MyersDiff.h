@@ -67,7 +67,7 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
 
             if (is_odd && diagonal >= lowest_diag + delta + 1 &&
                 diagonal <= highest_diag + delta - 1 &&
-                max_direct_path[diagonal] >= max_reversed_path[diagonal]) {
+                static_cast<long long>(max_direct_path[diagonal]) >= max_reversed_path[diagonal]) {
                 return {script_size * 2 - 1,
                         {from_id - snake_length, to_id - snake_length, snake_length}};
             }
@@ -97,7 +97,7 @@ static std::pair<size_t, Snake> GetMiddleSnake(const std::vector<T>& from, const
             max_reversed_path[diagonal] = from_id - from_left;
 
             if (!is_odd && diagonal >= lowest_diag - delta && diagonal <= highest_diag - delta &&
-                max_direct_path[diagonal] >= max_reversed_path[diagonal]) {
+                static_cast<long long>(max_direct_path[diagonal]) >= max_reversed_path[diagonal]) {
                 return {script_size * 2,
                         {static_cast<size_t>(from_id), static_cast<size_t>(to_id), snake_length}};
             }
