@@ -7,10 +7,18 @@
 
 namespace DiffPrint {
 
-enum Color { DEFAULT = 0, RED = 31, GREEN = 32 };
+enum Color { DEFAULT = 49, RED = 101, GREEN = 102 };
 
 template <typename TToken>
 static void PrintColoredToken(std::ostream& output, TToken token, Color color) {
+    if (token.size() > 0 && token[token.size() - 1] == '\n' && color != Color::DEFAULT) {
+        output << "\033[" + std::to_string(color) + "m";
+        output << token.substr(0, token.size() - 1);
+        output << "\\n";
+        output << "\033[0m";
+        output << '\n';
+        return;
+    }
     output << "\033[" + std::to_string(color) + "m";
     output << token;
     output << "\033[0m";
