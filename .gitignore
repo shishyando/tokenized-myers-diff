@@ -37,3 +37,7 @@
 # VS folders
 **/.vs
 **/out
+**/.vscode
+
+# build folder
+**/build

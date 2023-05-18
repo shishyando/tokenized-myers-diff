@@ -10,6 +10,6 @@ public:
 
 private:
     std::chrono::time_point<std::chrono::steady_clock> start_ =
-        std::chrono::high_resolution_clock::now();
+        std::chrono::steady_clock::now();
     std::chrono::time_point<std::chrono::steady_clock> end_ = {};
 };

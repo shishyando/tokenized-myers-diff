@@ -1,6 +1,8 @@
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 
+#include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
