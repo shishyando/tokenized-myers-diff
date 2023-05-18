@@ -5,14 +5,14 @@
 
 // TODO....
 void Test(std::string_view text, TokenizerMode tokenizer_mode, ParserMode parser) {
-    std::unique_ptr<Tokenizer> tokenizer = GetTokenizer(tokenizer_mode, parser);
-    std::vector<CodeType> vec = tokenizer->GetTokenCodes(text);
+    std::unique_ptr<Tokenizer> tokenizer = GetTokenizer(tokenizer_mode, parser, "", text);
+    std::vector<TokenInfo> vec = tokenizer->GetNewTokensInfo();
     for (auto i : vec) {
-        std::cout << i << ' ';
+        std::cout << i.GetId() << ' ';
     }
     std::cout << std::endl;
     for (auto i : vec) {
-        std::cout << tokenizer->Decode(i) << "|";
+        std::cout << tokenizer->DecodeNew(i) << "|";
     }
     std::cout << std::endl << "-------------" << std::endl;
 }

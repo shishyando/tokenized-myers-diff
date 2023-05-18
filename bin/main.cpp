@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         .metavar("PARSER_MODE");
     args.add_argument("--tokenizer", "-t")
         .default_value(std::string{"line"})
-        .help("tokenizer type: symbol, word, line")
+        .help("tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change")
         .metavar("TOKENIZER_TYPE");
     args.add_argument("--benchmark", "-b")
         .help("measure timings")
@@ -64,6 +64,10 @@ int main(int argc, char* argv[]) {
         tokenizer_mode = TokenizerMode::WORD;
     } else if (tokeninzer_arg == "line") {
         tokenizer_mode = TokenizerMode::LINE;
+    } else if (tokeninzer_arg == "ignore-all-space") {
+        tokenizer_mode = TokenizerMode::IGNORE_ALL_SPACE;
+    } else if (tokeninzer_arg == "ignore-space-change") {
+        tokenizer_mode = TokenizerMode::IGNORE_SPACE_CHANGE;
     } else {
         std::cerr << "Invalid tokenizer mode" << std::endl;
         std::cerr << args << std::endl;
@@ -106,11 +110,11 @@ int main(int argc, char* argv[]) {
     }
 
     std::unique_ptr<Tokenizer> tokenizer;
-    std::vector<CodeType> old_code, new_code;
+    std::vector<TokenInfo> old_code, new_code;
     try {
-        tokenizer = GetTokenizer(tokenizer_mode, parser_mode);
-        old_code = tokenizer->GetTokenCodes(old_file);
-        new_code = tokenizer->GetTokenCodes(new_file);
+        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file);
+        old_code = tokenizer->GetOldTokensInfo();
+        new_code = tokenizer->GetNewTokensInfo();
     } catch (const std::exception& ex) {
         std::cerr << "Tokenizer Error: " << ex.what() << std::endl;
         return 2;
@@ -122,7 +126,7 @@ int main(int argc, char* argv[]) {
 
     Myers::Script script;
     try {
-        script = Myers::ShortestEditScript<CodeType>(old_code, new_code);
+        script = Myers::ShortestEditScript(old_code, new_code);
     } catch (const std::exception& ex) {
         std::cerr << "Myers Algorithm Error: " << ex.what() << std::endl;
         return 3;
