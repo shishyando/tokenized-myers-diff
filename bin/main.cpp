@@ -38,10 +38,35 @@ int main(int argc, char* argv[]) {
         .default_value(std::string{"line"})
         .help("tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change")
         .metavar("TOKENIZER_TYPE");
+    args.add_argument("--common-prefix")
+        .default_value(std::string{""})
+        .help("prefix for printing common part in raw mode");
+    args.add_argument("--old-prefix")
+        .default_value(std::string{"[-]"})
+        .help("prefix for printing deleted part in raw mode");
+    args.add_argument("--new-prefix")
+        .default_value(std::string{"[+]"})
+        .help("prefix for printing added part in raw mode");
     args.add_argument("--benchmark", "-b")
         .help("measure timings")
         .default_value(false)
         .implicit_value(true);
+    args.add_argument("--common", "-c")
+            .help("print common parts of the files")
+            .default_value(false)
+            .implicit_value(true);
+    args.add_argument("--raw")
+            .help("print diff without colors")
+            .default_value(false)
+            .implicit_value(true);
+    args.add_argument("--show-common-newlines")
+            .help("print common part with newlines displayed as '\\n'")
+            .default_value(false)
+            .implicit_value(true);
+    args.add_argument("--show-pos")
+            .help("print diff start position in both files")
+            .default_value(false)
+            .implicit_value(true);
 
     try {
         args.parse_args(argc, argv);
@@ -137,7 +162,17 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        DiffPrint::Print(std::cout, script, tokenizer, old_code, new_code);
+         DiffPrint::DiffPrinter::Mode mode {
+            .raw = args.get<bool>("--raw"),
+            .common_part = args.get<bool>("--common"),
+            .show_common_newlines = args.get<bool>("--show-common-newlines"),
+            .show_pos = args.get<bool>("--show-pos"),
+            .old_prefix = args.get<std::string>("--old-prefix"),
+            .new_prefix = args.get<std::string>("--new-prefix"),
+            .common_prefix = args.get<std::string>("--common-prefix"),
+        };
+        DiffPrint::DiffPrinter diffPrinter{.mode = mode};
+        diffPrinter.Print(std::cout, script, tokenizer, old_code, new_code);
     } catch (const std::exception& ex) {
         std::cerr << "Print Diff Error: " << ex.what() << std::endl;
         return 4;
