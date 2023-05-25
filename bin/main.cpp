@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         .metavar("PARSER_MODE");
     args.add_argument("--tokenizer", "-t")
         .default_value(std::string{"line"})
-        .help("tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change")
+        .help("tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change, semantic-code(requires more time)")
         .metavar("TOKENIZER_TYPE");
     args.add_argument("--common-prefix")
         .default_value(std::string{""})
@@ -93,6 +93,8 @@ int main(int argc, char* argv[]) {
         tokenizer_mode = TokenizerMode::IGNORE_ALL_SPACE;
     } else if (tokeninzer_arg == "ignore-space-change") {
         tokenizer_mode = TokenizerMode::IGNORE_SPACE_CHANGE;
+    } else if (tokeninzer_arg == "semantic-code") {
+        tokenizer_mode = TokenizerMode::SEMANTIC_CODE;
     } else {
         std::cerr << "Invalid tokenizer mode" << std::endl;
         std::cerr << args << std::endl;
@@ -137,7 +139,7 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<Tokenizer> tokenizer;
     std::vector<TokenInfo> old_code, new_code;
     try {
-        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file);
+        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file, old_file_path, new_file_path);
         old_code = tokenizer->GetOldTokensInfo();
         new_code = tokenizer->GetNewTokensInfo();
     } catch (const std::exception& ex) {
