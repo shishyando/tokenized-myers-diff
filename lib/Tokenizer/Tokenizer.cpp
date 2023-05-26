@@ -255,20 +255,23 @@ size_t IgnoreSpaceChangeTokenizer::GetHash(TokenType token) {
 }
 
 CodeTokenizer::CodeTokenizer(std::string_view old_data, std::string_view new_data,
-        const std::string& path_to_old_file, const std::string& path_to_new_file) 
+                             const std::string& path_to_old_file,
+                             const std::string& path_to_new_file)
     : MapUsingTokenizers(ParserMode::UTF_8, old_data, new_data) {
-    parsed_old_tokens_ = ls_communicator::GetParseResult(path_to_old_file);
-    parsed_new_tokens_ = ls_communicator::GetParseResult(path_to_new_file);
+    parsed_old_tokens_ = LSCommunicator::GetParseResult(path_to_old_file);
+    parsed_new_tokens_ = LSCommunicator::GetParseResult(path_to_new_file);
 }
 
 std::optional<TokenType> CodeTokenizer::GetToken(std::string_view input, size_t pos) {
     if (pos >= input.size()) {
         return std::nullopt;
     }
-    std::unordered_set<size_t>& parsed_tokens = (IsNewData(input) ? parsed_new_tokens_ : parsed_old_tokens_);
+    std::unordered_set<size_t>& parsed_tokens =
+        (IsNewData(input) ? parsed_new_tokens_ : parsed_old_tokens_);
     size_t start = pos;
     while (std::optional<TokenType> symbol = GetSymbol(input, pos)) {
-        if ((symbol.value().size() == 1 && symbol.value() == "\n") || (parsed_tokens.contains(pos) && start != pos)) {
+        if ((symbol.value().size() == 1 && symbol.value() == "\n") ||
+            (parsed_tokens.contains(pos) && start != pos)) {
             break;
         }
         pos += symbol.value().size();
@@ -280,8 +283,9 @@ std::optional<TokenType> CodeTokenizer::GetToken(std::string_view input, size_t 
 }
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser,
-                                        std::string_view old_data, std::string_view new_data, 
-                                        std::string& path_to_old_file, std::string& path_to_new_file) {
+                                        std::string_view old_data, std::string_view new_data,
+                                        const std::string& path_to_old_file,
+                                        const std::string& path_to_new_file) {
     if (tokenizer == TokenizerMode::SYMBOL) {
         return std::make_unique<SymbolTokenizer>(parser, old_data, new_data);
     } else if (tokenizer == TokenizerMode::WORD) {
@@ -293,7 +297,8 @@ std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode pars
     } else if (tokenizer == TokenizerMode::IGNORE_SPACE_CHANGE) {
         return std::make_unique<IgnoreSpaceChangeTokenizer>(parser, old_data, new_data);
     } else if (tokenizer == TokenizerMode::SEMANTIC_CODE) {
-        return std::make_unique<CodeTokenizer>(old_data, new_data, path_to_old_file, path_to_new_file);
+        return std::make_unique<CodeTokenizer>(old_data, new_data, path_to_old_file,
+                                               path_to_new_file);
     } else {
         throw std::invalid_argument("no such tokenizer type");
     }

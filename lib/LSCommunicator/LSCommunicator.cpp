@@ -9,9 +9,9 @@
 #include <filesystem>
 #include <vector>
 
-namespace ls_communicator {
-const int kMaxMsgToRead =
-    10;  // If we don't find data in 10 message, we will return with empty result.
+namespace LSCommunicator {
+const int kMaxMsgToRead = 10;  // If we don't find data in 10 message,
+                               // we will return with empty result.
 
 static std::string ReadFileContent(const std::string& full_file_path) {
     std::ifstream file(full_file_path);
@@ -29,9 +29,10 @@ static void SendMessage(QProcess* server, const std::string content) {
     server->write(content.c_str());
 }
 
-static QProcess* MakeServer(const std::string& file_path, const std::string& LS_path) {
+static QProcess* MakeServer([[maybe_unused]] const std::string& file_path,
+                            const std::string& ls_path) {
     QProcess* server = new QProcess{};
-    const QString server_name_qstring(LS_path.c_str());
+    const QString server_name_qstring(ls_path.c_str());
     server->start(server_name_qstring, QStringList{});
     server->waitForStarted(-1);
     return server;
@@ -94,28 +95,33 @@ static std::vector<size_t> FindResponse(QProcess* server) {
 
 static std::vector<size_t> GetTokensPos(const std::vector<size_t>& data,
                                         const std::string& file_content) {
-    size_t prev_line = 0, prev_lines_len = 0, prev_pos = 0;
+    size_t prev_lines_len = 0, prev_pos = 0;
     std::vector<size_t> tokens;
     for (size_t i = 0; i < data.size(); i += 5) {
         size_t line = data[i], pos = data[i + 1], len = data[i + 2];
         if (line != 0) {
             prev_pos = 0;
-            for (int _ = 0; _ < line; ++_) {
+            for (size_t _ = 0; _ < line; ++_) {
                 prev_lines_len = file_content.find("\n", prev_lines_len) + 1;
             }
         }
         pos += prev_pos;
         prev_pos = pos;
         pos += prev_lines_len;
-        prev_line += line;
         tokens.push_back(pos);
         tokens.push_back(pos + len);
     }
     return tokens;
 }
 
-std::string GetLSPath(const std::string& file_path) {
-    return "clangd-12";  // To extend later.
+std::string GetLSPath([[maybe_unused]] const std::string& file_path) {
+#if defined(__APPLE__) || defined(__MACH__)
+    return "clangd";  // To extend later.
+#elif __linux__
+    return "clangd-12"
+#else
+    throw std::runtime_error("Unsupported platform");
+#endif
 }
 
 std::unordered_set<size_t> GetParseResult(const std::string& file_path) {

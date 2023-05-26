@@ -5,4 +5,4 @@ add_executable(tokenizer_test unit_test.cpp)
 
 include_directories(..)
 
-target_link_libraries(tokenizer_test TokenizerLib)
+target_link_libraries(tokenizer_test TokenizerLib LSCommunicatorLib)

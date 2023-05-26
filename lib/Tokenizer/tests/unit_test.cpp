@@ -5,7 +5,7 @@
 
 // TODO....
 void Test(std::string_view text, TokenizerMode tokenizer_mode, ParserMode parser) {
-    std::unique_ptr<Tokenizer> tokenizer = GetTokenizer(tokenizer_mode, parser, "", text);
+    std::unique_ptr<Tokenizer> tokenizer = GetTokenizer(tokenizer_mode, parser, "", text, "", "");
     std::vector<TokenInfo> vec = tokenizer->GetNewTokensInfo();
     for (auto i : vec) {
         std::cout << i.GetId() << ' ';

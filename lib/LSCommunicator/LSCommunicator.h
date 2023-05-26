@@ -2,7 +2,7 @@
 #include <optional>
 #include <unordered_set>
 
-namespace ls_communicator {
+namespace LSCommunicator {
 /*
  * Parses file using language server(LS).
  *
@@ -10,6 +10,7 @@ namespace ls_communicator {
  *
  * return: std::unordered_set<size_t> with the tokens borders.
  */
+
 std::unordered_set<size_t> GetParseResult(const std::string& file_path);
 
 }  // namespace LSCommunicator

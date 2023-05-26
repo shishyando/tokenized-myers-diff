@@ -13,7 +13,14 @@ using TokenType = std::string_view;
 
 enum class ParserMode { BYTES, UTF_8 };
 
-enum class TokenizerMode { SYMBOL, WORD, LINE, IGNORE_ALL_SPACE, IGNORE_SPACE_CHANGE, SEMANTIC_CODE };
+enum class TokenizerMode {
+    SYMBOL,
+    WORD,
+    LINE,
+    IGNORE_ALL_SPACE,
+    IGNORE_SPACE_CHANGE,
+    SEMANTIC_CODE
+};
 
 class TokenInfo {
 public:
@@ -44,6 +51,7 @@ protected:
     virtual std::optional<TokenType> GetSymbol(std::string_view input, size_t pos);
     virtual std::vector<TokenInfo> GetTokenInfos(std::string_view input) = 0;
     bool IsNewData(std::string_view data);
+
 private:
     ParserMode parser_;
     std::string_view old_data_;
@@ -114,8 +122,9 @@ protected:
 
 class CodeTokenizer : public MapUsingTokenizers {
 public:
-    CodeTokenizer(std::string_view old_data, std::string_view new_data, 
-            const std::string& path_to_old_file, const std::string& path_to_new_file);
+    CodeTokenizer(std::string_view old_data, std::string_view new_data,
+                  const std::string& path_to_old_file, const std::string& path_to_new_file);
+
 private:
     std::optional<TokenType> GetToken(std::string_view input, size_t pos) override;
     std::unordered_set<size_t> parsed_old_tokens_;
@@ -124,4 +133,5 @@ private:
 
 std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode parser,
                                         std::string_view old_data, std::string_view new_data,
-                                        std::string& path_to_old_file, std::string& path_to_new_file);
+                                        const std::string& path_to_old_file,
+                                        const std::string& path_to_new_file);

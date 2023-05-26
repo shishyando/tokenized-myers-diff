@@ -36,7 +36,9 @@ int main(int argc, char* argv[]) {
         .metavar("PARSER_MODE");
     args.add_argument("--tokenizer", "-t")
         .default_value(std::string{"line"})
-        .help("tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change, semantic-code(requires more time)")
+        .help(
+            "tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change, "
+            "semantic-code")
         .metavar("TOKENIZER_TYPE");
     args.add_argument("--common-prefix")
         .default_value(std::string{""})
@@ -52,21 +54,21 @@ int main(int argc, char* argv[]) {
         .default_value(false)
         .implicit_value(true);
     args.add_argument("--common", "-c")
-            .help("print common parts of the files")
-            .default_value(false)
-            .implicit_value(true);
+        .help("print common parts of the files")
+        .default_value(false)
+        .implicit_value(true);
     args.add_argument("--raw")
-            .help("print diff without colors")
-            .default_value(false)
-            .implicit_value(true);
+        .help("print diff without colors")
+        .default_value(false)
+        .implicit_value(true);
     args.add_argument("--show-common-newlines")
-            .help("print common part with newlines displayed as '\\n'")
-            .default_value(false)
-            .implicit_value(true);
+        .help("print common part with newlines displayed as '\\n'")
+        .default_value(false)
+        .implicit_value(true);
     args.add_argument("--show-pos")
-            .help("print diff start position in both files")
-            .default_value(false)
-            .implicit_value(true);
+        .help("print diff start position in both files")
+        .default_value(false)
+        .implicit_value(true);
 
     try {
         args.parse_args(argc, argv);
@@ -139,7 +141,8 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<Tokenizer> tokenizer;
     std::vector<TokenInfo> old_code, new_code;
     try {
-        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file, old_file_path, new_file_path);
+        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file, old_file_path,
+                                 new_file_path);
         old_code = tokenizer->GetOldTokensInfo();
         new_code = tokenizer->GetNewTokensInfo();
     } catch (const std::exception& ex) {
@@ -164,7 +167,7 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-         DiffPrint::DiffPrinter::Mode mode {
+        DiffPrint::DiffPrinter::Mode mode{
             .raw = args.get<bool>("--raw"),
             .common_part = args.get<bool>("--common"),
             .show_common_newlines = args.get<bool>("--show-common-newlines"),
@@ -173,8 +176,8 @@ int main(int argc, char* argv[]) {
             .new_prefix = args.get<std::string>("--new-prefix"),
             .common_prefix = args.get<std::string>("--common-prefix"),
         };
-        DiffPrint::DiffPrinter diffPrinter{.mode = mode};
-        diffPrinter.Print(std::cout, script, tokenizer, old_code, new_code);
+        DiffPrint::DiffPrinter diff_printer{.mode = mode};
+        diff_printer.Print(std::cout, script, tokenizer, old_code, new_code);
     } catch (const std::exception& ex) {
         std::cerr << "Print Diff Error: " << ex.what() << std::endl;
         return 4;
