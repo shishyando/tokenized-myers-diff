@@ -1,53 +1,35 @@
-#include <sys/fcntl.h>
-#include <sys/mman.h>
-
-#include <cstring>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <map>
 #include <string>
 
 #include "lib/DiffPrint/DiffPrint.h"
-#include "lib/MyersDiff/MyersDiff.h"
-#include "lib/Timer/Timer.h"
 #include "lib/Tokenizer/Tokenizer.h"
 #include "lib/argparse/argparse.hpp"
+#include "lib/DiffRunner/DiffRunner.h"
 
-const char* MmapFile(const char* file_path, size_t file_size) {
-    int fd = open(file_path, O_RDONLY);
-    errno = 0;
-    void* mem = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (mem == MAP_FAILED) {
-        throw std::runtime_error("mmap: " + std::string(std::strerror(errno)));
-    }
-    return static_cast<const char*>(mem);
-}
-
-static Timer timer;
+using namespace std::literals::string_literals;
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser args("diff");
     args.add_argument("old").help("old file path");
     args.add_argument("new").help("new file path");
     args.add_argument("--parser", "-p")
-        .default_value(std::string{"utf-8"})
+        .default_value("utf-8"s)
         .help("parser mode: bytes, utf-8")
         .metavar("PARSER_MODE");
     args.add_argument("--tokenizer", "-t")
-        .default_value(std::string{"line"})
+        .default_value("line"s)
         .help(
             "tokenizer type: symbol, word, line, ignore-all-space, ignore-space-change, "
             "semantic-code")
         .metavar("TOKENIZER_TYPE");
     args.add_argument("--common-prefix")
-        .default_value(std::string{""})
+        .default_value(""s)
         .help("prefix for printing common part in raw mode");
     args.add_argument("--old-prefix")
-        .default_value(std::string{"[-]"})
+        .default_value("[-]"s)
         .help("prefix for printing deleted part in raw mode");
     args.add_argument("--new-prefix")
-        .default_value(std::string{"[+]"})
+        .default_value("[+]"s)
         .help("prefix for printing added part in raw mode");
     args.add_argument("--benchmark", "-b")
         .help("measure timings")
@@ -69,6 +51,10 @@ int main(int argc, char* argv[]) {
         .help("print diff start position in both files")
         .default_value(false)
         .implicit_value(true);
+    args.add_argument("--recursive", "-r")
+        .help("recursive directory mode")
+        .default_value(false)
+        .implicit_value(true);
 
     try {
         args.parse_args(argc, argv);
@@ -83,6 +69,7 @@ int main(int argc, char* argv[]) {
     auto tokeninzer_arg = args.get<std::string>("--tokenizer");
     auto parser_arg = args.get<std::string>("--parser");
     auto benchmark = args.get<bool>("--benchmark");
+    auto recursive = args.get<bool>("--recursive");
 
     TokenizerMode tokenizer_mode;
     if (tokeninzer_arg == "symbol") {
@@ -102,6 +89,7 @@ int main(int argc, char* argv[]) {
         std::cerr << args << std::endl;
         return 1;
     }
+
     ParserMode parser_mode;
     if (parser_arg == "bytes") {
         parser_mode = ParserMode::BYTES;
@@ -113,78 +101,35 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (benchmark) {
-        timer.Start();
-    }
+    DiffPrint::DiffPrinter::Mode mode{
+        .raw = args.get<bool>("--raw"),
+        .common_part = args.get<bool>("--common"),
+        .show_common_newlines = args.get<bool>("--show-common-newlines"),
+        .show_pos = args.get<bool>("--show-pos"),
+        .old_prefix = args.get<std::string>("--old-prefix"),
+        .new_prefix = args.get<std::string>("--new-prefix"),
+        .common_prefix = args.get<std::string>("--common-prefix"),
+    };
+    DiffPrint::DiffPrinter diff_printer{.mode = mode};
 
-    const char* old_file_mem;
-    size_t old_file_size;
-    const char* new_file_mem;
-    size_t new_file_size;
+    DiffRunner diff_runner(tokenizer_mode, parser_mode, diff_printer, benchmark);
+
     try {
-        old_file_size = std::filesystem::file_size(old_file_path);
-        old_file_mem = MmapFile(old_file_path.c_str(), old_file_size);
-        new_file_size = std::filesystem::file_size(new_file_path);
-        new_file_mem = MmapFile(new_file_path.c_str(), new_file_size);
-    } catch (const std::exception& ex) {
-        std::cerr << ex.what() << std::endl;
-        std::cerr << args << std::endl;
+        if (!recursive) {
+            diff_runner.FileDiff(std::cout, old_file_path, new_file_path);
+        } else {
+            diff_runner.DirDiff(std::cout, old_file_path, new_file_path);
+        }
+
+        if (benchmark) {
+            std::cerr << "mmap: " << diff_runner.GetMmapMs() << "ms\n"
+                      << "tokenize: " << diff_runner.GetTokenizeMs() << "ms\n"
+                      << "diff: " << diff_runner.GetDiffMs() << " ms\n"
+                      << "print: " << diff_runner.GetPrintMs() << " ms\n";
+        }
+    } catch (std::exception& ex) {
+        std::cerr << ex.what() << '\n';
         return 1;
-    }
-    std::string_view old_file(old_file_mem, old_file_size);
-    std::string_view new_file(new_file_mem, new_file_size);
-
-    if (benchmark) {
-        timer.Duration("mmap files");
-    }
-
-    std::unique_ptr<Tokenizer> tokenizer;
-    std::vector<TokenInfo> old_code, new_code;
-    try {
-        tokenizer = GetTokenizer(tokenizer_mode, parser_mode, old_file, new_file, old_file_path,
-                                 new_file_path);
-        old_code = tokenizer->GetOldTokensInfo();
-        new_code = tokenizer->GetNewTokensInfo();
-    } catch (const std::exception& ex) {
-        std::cerr << "Tokenizer Error: " << ex.what() << std::endl;
-        return 2;
-    }
-
-    if (benchmark) {
-        timer.Duration("tokenize");
-    }
-
-    Myers::Script script;
-    try {
-        script = Myers::ShortestEditScript(old_code, new_code);
-    } catch (const std::exception& ex) {
-        std::cerr << "Myers Algorithm Error: " << ex.what() << std::endl;
-        return 3;
-    }
-
-    if (benchmark) {
-        timer.Duration("diff");
-    }
-
-    try {
-        DiffPrint::DiffPrinter::Mode mode{
-            .raw = args.get<bool>("--raw"),
-            .common_part = args.get<bool>("--common"),
-            .show_common_newlines = args.get<bool>("--show-common-newlines"),
-            .show_pos = args.get<bool>("--show-pos"),
-            .old_prefix = args.get<std::string>("--old-prefix"),
-            .new_prefix = args.get<std::string>("--new-prefix"),
-            .common_prefix = args.get<std::string>("--common-prefix"),
-        };
-        DiffPrint::DiffPrinter diff_printer{.mode = mode};
-        diff_printer.Print(std::cout, script, tokenizer, old_code, new_code);
-    } catch (const std::exception& ex) {
-        std::cerr << "Print Diff Error: " << ex.what() << std::endl;
-        return 4;
-    }
-
-    if (benchmark) {
-        timer.Duration("print");
     }
     return 0;
 }

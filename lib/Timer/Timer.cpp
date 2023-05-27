@@ -5,14 +5,14 @@ void Timer::Start() {
     end_ = {};
 }
 
-void Timer::Duration(std::string label, bool reset) {
+long long Timer::MsDuration(bool reset) {
     if (end_ == std::chrono::time_point<std::chrono::steady_clock>{}) {
         end_ = std::chrono::steady_clock::now();
     }
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_ - start_);
-    std::cerr << label + ": " << duration.count() << "ms\n";
     if (reset) {
         start_ = std::chrono::steady_clock::now();
         end_ = std::chrono::time_point<std::chrono::steady_clock>{};
     }
+    return duration.count();
 }

@@ -7,10 +7,6 @@
 TokenInfo::TokenInfo(TokenId id, uint32_t begin_pos) : id_(id), begin_pos_(begin_pos) {
 }
 
-bool TokenInfo::operator==(const TokenInfo& rhs) const {
-    return id_ == rhs.id_;
-}
-
 TokenId TokenInfo::GetId() const {
     return id_;
 }

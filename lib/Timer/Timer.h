@@ -1,4 +1,5 @@
 #pragma once
+
 #include <chrono>
 #include <string>
 #include <iostream>
@@ -6,7 +7,7 @@
 class Timer {
 public:
     void Start();
-    void Duration(std::string, bool reset = true);
+    long long MsDuration(bool reset = true);
 
 private:
     std::chrono::time_point<std::chrono::steady_clock> start_ =

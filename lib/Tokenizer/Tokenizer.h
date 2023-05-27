@@ -135,3 +135,7 @@ std::unique_ptr<Tokenizer> GetTokenizer(TokenizerMode tokenizer, ParserMode pars
                                         std::string_view old_data, std::string_view new_data,
                                         const std::string& path_to_old_file,
                                         const std::string& path_to_new_file);
+
+inline bool TokenInfo::operator==(const TokenInfo& rhs) const {
+    return id_ == rhs.id_;
+}
