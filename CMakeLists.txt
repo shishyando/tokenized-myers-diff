@@ -17,4 +17,4 @@ add_executable(diff bin/main.cpp)
 add_subdirectory(lib/LSCommunicator)
 add_subdirectory(lib/Tokenizer)
 
-target_link_libraries(diff MyersDiff DiffPrint Timer LSCommunicatorLib TokenizerLib)
+target_link_libraries(diff MyersDiff DiffPrint Timer TokenizerLib)

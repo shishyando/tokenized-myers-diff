@@ -118,7 +118,7 @@ std::string GetLSPath([[maybe_unused]] const std::string& file_path) {
 #if defined(__APPLE__) || defined(__MACH__)
     return "clangd";  // To extend later.
 #elif __linux__
-    return "clangd-12"
+    return "clangd-12";
 #else
     throw std::runtime_error("Unsupported platform");
 #endif
