@@ -7,7 +7,6 @@ add_compile_options(-O3)
 
 include_directories(.)
 
-
 add_library(MyersDiff STATIC lib/MyersDiff/MyersDiff.cpp)
 add_library(DiffPrint STATIC lib/DiffPrint/DiffPrint.cpp)
 add_library(Timer STATIC lib/Timer/Timer.cpp)
@@ -20,4 +19,4 @@ add_executable(diff bin/main.cpp)
 add_subdirectory(lib/LSCommunicator)
 add_subdirectory(lib/Tokenizer)
 
-target_link_libraries(diff MyersDiff DiffPrint Timer TokenizerLib DiffRunner)
+target_link_libraries(diff DiffRunner MyersDiff DiffPrint Timer TokenizerLib)

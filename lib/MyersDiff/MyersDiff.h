@@ -133,7 +133,7 @@ static void GetSnakeDecomposition(const std::vector<T>& from, const std::vector<
         }
         int32_t shift = 0;
         for (uint32_t id = 0; id < from_right - from_left; ++id) {
-            if (from[from_left + id] != to[to_left + id + shift]) {
+            if (!(from[from_left + id] == to[to_left + id + shift])) {
                 ++current_snake;
                 ++shift;
             }
@@ -146,7 +146,7 @@ static void GetSnakeDecomposition(const std::vector<T>& from, const std::vector<
         }
         int32_t shift = 0;
         for (uint32_t id = 0; id < to_right - to_left; ++id) {
-            if (from[from_left + id + shift] != to[to_left + id]) {
+            if (!(from[from_left + id + shift] == to[to_left + id])) {
                 ++current_snake;
                 ++shift;
             }
