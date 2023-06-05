@@ -1,0 +1,5 @@
+{
+    "LS": [
+        {"name": "clangd", "extensions": [".c", ".cpp", ".h"]}
+    ]
+}

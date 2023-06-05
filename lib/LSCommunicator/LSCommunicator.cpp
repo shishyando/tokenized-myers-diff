@@ -8,8 +8,11 @@
 #include <fstream>
 #include <filesystem>
 #include <vector>
+#include <algorithm>
+#include <cstdlib>
 
 namespace LSCommunicator {
+const std::string kConfigFilePath = "/.diff_config.json";
 const int kMaxMsgToRead = 10;  // If we don't find data in 10 message,
                                // we will return with empty result.
 
@@ -20,13 +23,15 @@ static std::string ReadFileContent(const std::string& full_file_path) {
     return buffer.str();
 }
 
-static void SendMessage(QProcess* server, const std::string content) {
+static std::string SendMessage(QProcess* server, const std::string& content) {
     std::ostringstream oss;
     oss << "Content-Length: " << content.length() << "\n"
         << "\n";
     std::string header = oss.str();
     server->write(header.c_str());
     server->write(content.c_str());
+    server->waitForReadyRead(-1);
+    return server->readAll().toStdString();
 }
 
 static QProcess* MakeServer([[maybe_unused]] const std::string& file_path,
@@ -61,36 +66,28 @@ static void NotifyDidOpen(QProcess* server, const std::string& full_file_path,
     SendMessage(server, did_open_req.dump());
 }
 
-static void RequestParseFile(QProcess* server, const std::string& full_file_path) {
+static std::string RequestParseFile(QProcess* server, const std::string& full_file_path) {
     nlohmann::json parse_file_req;
     parse_file_req["id"] = 0;
     parse_file_req["jsonrpc"] = "2.0";
     parse_file_req["method"] = "textDocument/semanticTokens/full";
     parse_file_req["params"]["textDocument"]["uri"] = "file://" + full_file_path;
-    SendMessage(server, parse_file_req.dump());
+    return SendMessage(server, parse_file_req.dump());
 }
 
-static nlohmann::json GetJsonFromServer(QProcess* server) {
-    server->waitForReadyRead(-1);
-    std::string msg = server->readAll().toStdString();
+static std::vector<size_t> GetResponse(std::string& msg) {
     size_t json_start = 0;
     while (json_start < msg.length() && msg[json_start] != '{') {
         ++json_start;
     }
     msg.erase(0, json_start);
-    return nlohmann::json::parse(msg);
-}
-
-static std::vector<size_t> FindResponse(QProcess* server) {
-    for (int i = 0; i < kMaxMsgToRead; i++) {
-        nlohmann::json res = GetJsonFromServer(server);
-        if (res.contains("result")) {
-            if (res["result"].contains("data")) {
-                return res["result"]["data"].get<std::vector<size_t>>();
-            }
+    nlohmann::json res = nlohmann::json::parse(msg);
+    if (res.contains("result")) {
+        if (res["result"].contains("data")) {
+            return res["result"]["data"].get<std::vector<size_t>>();
         }
     }
-    return std::vector<size_t>{};
+    throw std::runtime_error("Language Server doesn't support semantic tokenization");
 }
 
 static std::vector<size_t> GetTokensPos(const std::vector<size_t>& data,
@@ -114,14 +111,26 @@ static std::vector<size_t> GetTokensPos(const std::vector<size_t>& data,
     return tokens;
 }
 
-std::string GetLSPath([[maybe_unused]] const std::string& file_path) {
-#if defined(__APPLE__) || defined(__MACH__)
-    return "clangd";  // To extend later.
-#elif __linux__
-    return "clangd-12";
-#else
-    throw std::runtime_error("Unsupported platform");
-#endif
+
+static std::string GetLSPath(const std::string& file_path) {
+    std::string file_ext = std::filesystem::path(file_path).extension();
+    std::string full_path = std::getenv("HOME") + kConfigFilePath;
+    std::ifstream config_file;
+    config_file.open(full_path);
+    if (!config_file.is_open()) {
+        throw std::runtime_error("Unable to read config file for Language Server on \"" + full_path + "\"");
+    }
+    nlohmann::json config;
+    config_file >> config;
+    for (const auto& config_line : config["LS"].items()) {
+        auto LS = config_line.value();
+        for (const auto& ext : LS["extensions"].items()) {
+            if (ext.value() == file_ext) {
+                return LS["name"];
+            }
+        }
+    }
+    throw std::runtime_error("Couldn't find Language Server for " + file_ext + " extension");
 }
 
 std::unordered_set<size_t> GetParseResult(const std::string& file_path) {
@@ -134,8 +143,8 @@ std::unordered_set<size_t> GetParseResult(const std::string& file_path) {
 
     InitServer(server, cur_dir);
     NotifyDidOpen(server, full_file_path, file_content);
-    RequestParseFile(server, full_file_path);
-    std::vector<size_t> tokens = GetTokensPos(FindResponse(server), file_content);
+    std::string res = RequestParseFile(server, full_file_path);
+    std::vector<size_t> tokens = GetTokensPos(GetResponse(res), file_content);
     server->kill();
     return std::unordered_set<size_t>(tokens.begin(), tokens.end());
 }
