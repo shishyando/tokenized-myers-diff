@@ -50,4 +50,4 @@ Run `cmake .` and `make`. The result is executable file `diff`.
 Use `--tokenizer semantic-code` option to tokenize code files using [Language Sever](https://microsoft.github.io/language-server-protocol/):
 ![semantic code example](media/code-semantic.gif)
 
-To install all packages for this option, you can run `sudo ./setup.sh` in you terminal
+To install all packages for this option, you can run `sudo ./setup.sh` in you terminal. Default clangd Language Server and packages will be installed, and config file will be saved on ~/.diff_config.json. You can add more Language Server by installing them and adding to the config.
